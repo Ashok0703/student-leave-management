@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        body { background:#f0f4f8; }
+        .navbar-custom { background:linear-gradient(135deg,#ff6b6b,#ee5a24); }
+        .card { border:none; border-radius:16px; box-shadow:0 4px 15px rgba(0,0,0,0.08); }
+        .btn-danger-custom { background:linear-gradient(135deg,#ff6b6b,#ee5a24); border:none; }
+        .stat-card { background:linear-gradient(135deg,#ff6b6b,#ee5a24); color:white; border-radius:16px; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-custom navbar-dark px-4 py-3">
+    <span class="navbar-brand fw-bold fs-4"><i class="bi bi-shield-lock-fill me-2"></i>Admin Dashboard</span>
+    <a href="/logout" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-box-arrow-right me-1"></i>Logout
+    </a>
+</nav>
+
+<div class="container py-4">
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card p-4 text-center">
+                <i class="bi bi-person-workspace fs-1"></i>
+                <h2 class="fw-bold mt-2" th:text="${#lists.size(hods)}">0</h2>
+                <p class="mb-0 opacity-75">Total HODs</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create HOD Form -->
+    <div class="card p-4 mb-4">
+        <h5 class="fw-bold mb-4"><i class="bi bi-person-plus-fill text-danger me-2"></i>Create HOD Account</h5>
+        <form th:action="@{/admin/create-hod}" method="post">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="name" class="form-control" placeholder="HOD Name" required/>
+                </div>
+                <div class="col-md-3">
+                    <select name="department" class="form-select" required>
+                        <option value="">Select Department</option>
+                        <option value="CSE">CSE</option>
+                        <option value="ECE">ECE</option>
+                        <option value="IT">IT</option>
+                        <option value="Mechanical">Mechanical</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="username" class="form-control" placeholder="Username" required/>
+                </div>
+                <div class="col-md-2">
+                    <input type="password" name="password" class="form-control" placeholder="Password" required/>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-danger-custom btn-danger w-100 text-white">
+                        <i class="bi bi-plus-circle me-1"></i>Create
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- HOD List -->
+    <div class="card p-4">
+        <h5 class="fw-bold mb-4"><i class="bi bi-list-ul me-2"></i>All HODs</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>#</th><th>Name</th><th>Department</th><th>Username</th><th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="hod, stat : ${hods}">
+                    <td th:text="${stat.count}">1</td>
+                    <td th:text="${hod.name}">Name</td>
+                    <td><span class="badge bg-primary" th:text="${hod.department}">Dept</span></td>
+                    <td th:text="${hod.user.username}">user</td>
+                    <td>
+                        <form th:action="@{/admin/delete-hod/{id}(id=${hod.id})}" method="post"
+                              onsubmit="return confirm('Delete this HOD?')">
+                            <button class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(hods)}">
+                    <td colspan="5" class="text-center text-muted py-4">No HODs created yet</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

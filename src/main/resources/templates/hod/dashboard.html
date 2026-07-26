@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>HOD Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        body { background:#f0f4f8; }
+        .navbar-custom { background:linear-gradient(135deg,#a29bfe,#6c5ce7); }
+        .card { border:none; border-radius:16px; box-shadow:0 4px 15px rgba(0,0,0,0.08); }
+        .badge-pending { background:#ffeaa7; color:#d35400; }
+        .badge-approved { background:#d4edda; color:#155724; }
+        .badge-rejected { background:#f8d7da; color:#721c24; }
+        .stat-card { color:white; border-radius:16px; padding:1.5rem; text-align:center; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-custom navbar-dark px-4 py-3">
+    <span class="navbar-brand fw-bold fs-4">
+        <i class="bi bi-person-workspace me-2"></i>
+        HOD Dashboard — <span th:text="${hod.name}">Name</span>
+        <small class="opacity-75 fs-6 ms-2" th:text="'(' + ${hod.department} + ')'"></small>
+    </span>
+    <a href="/logout" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-box-arrow-right me-1"></i>Logout
+    </a>
+</nav>
+
+<div class="container py-4">
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);">
+                <i class="bi bi-people-fill fs-2"></i>
+                <h3 class="fw-bold mt-1" th:text="${#lists.size(tutors)}">0</h3>
+                <p class="mb-0 opacity-80">Total Tutors</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="background:linear-gradient(135deg,#fdcb6e,#e17055);">
+                <i class="bi bi-hourglass-split fs-2"></i>
+                <h3 class="fw-bold mt-1" th:text="${#lists.size(pendingLeaves)}">0</h3>
+                <p class="mb-0 opacity-80">Pending Leaves</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="background:linear-gradient(135deg,#55efc4,#00b894);">
+                <i class="bi bi-journal-check fs-2"></i>
+                <h3 class="fw-bold mt-1" th:text="${#lists.size(allLeaves)}">0</h3>
+                <p class="mb-0 opacity-80">Total Leaves</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Tutor -->
+    <div class="card p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-person-plus-fill text-purple me-2"></i>Add Tutor</h5>
+        <form th:action="@{/hod/create-tutor}" method="post">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="name" class="form-control" placeholder="Tutor Name" required/>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="username" class="form-control" placeholder="Username" required/>
+                </div>
+                <div class="col-md-3">
+                    <input type="password" name="password" class="form-control" placeholder="Password" required/>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle me-1"></i>Add
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Pending Leave Requests -->
+    <div class="card p-4 mb-4">
+        <h5 class="fw-bold mb-3">
+            <i class="bi bi-clock-fill text-warning me-2"></i>Pending Leave Approvals
+        </h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Student</th><th>Reg No</th><th>Reason</th><th>Type</th>
+                    <th>From</th><th>To</th><th>Days</th><th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="leave : ${pendingLeaves}">
+                    <td th:text="${leave.student.name}"></td>
+                    <td th:text="${leave.student.regNo}"></td>
+                    <td th:text="${leave.reason}"></td>
+                    <td><span class="badge bg-info" th:text="${leave.leaveType}"></span></td>
+                    <td th:text="${leave.fromDate}"></td>
+                    <td th:text="${leave.toDate}"></td>
+                    <td th:text="${leave.totalDays}"></td>
+                    <td>
+                        <form th:action="@{/hod/approve-leave/{id}(id=${leave.id})}"
+                              method="post" class="d-inline">
+                            <button class="btn btn-sm btn-success me-1">
+                                <i class="bi bi-check-circle"></i> Approve
+                            </button>
+                        </form>
+                        <button class="btn btn-sm btn-danger"
+                                data-bs-toggle="modal"
+                                th:attr="data-bs-target='#rejectModal'+${leave.id}">
+                            <i class="bi bi-x-circle"></i> Reject
+                        </button>
+
+                        <!-- Reject Modal -->
+                        <div class="modal fade" th:id="'rejectModal'+${leave.id}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Reject Leave</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form th:action="@{/hod/reject-leave/{id}(id=${leave.id})}" method="post">
+                                        <div class="modal-body">
+                                            <label class="form-label">Reason for Rejection</label>
+                                            <textarea name="remarks" class="form-control" rows="3" required></textarea>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger">Reject</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(pendingLeaves)}">
+                    <td colspan="8" class="text-center text-muted py-4">No pending leave requests</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- All Leave History -->
+    <div class="card p-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-journal-text me-2"></i>All Department Leave History</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Student</th><th>Tutor</th><th>Type</th><th>Days</th>
+                    <th>Tutor Status</th><th>HOD Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="leave : ${allLeaves}">
+                    <td th:text="${leave.student.name}"></td>
+                    <td th:text="${leave.student.tutor.name}"></td>
+                    <td th:text="${leave.leaveType}"></td>
+                    <td th:text="${leave.totalDays}"></td>
+                    <td>
+                            <span th:class="'badge ' + (${leave.tutorStatus.name() == 'APPROVED'} ? 'bg-success' : (${leave.tutorStatus.name() == 'REJECTED'} ? 'bg-danger' : 'bg-warning text-dark'))"
+                                  th:text="${leave.tutorStatus}"></span>
+                    </td>
+                    <td>
+                            <span th:if="${leave.hodStatus != null}"
+                                  th:class="'badge ' + (${leave.hodStatus.name() == 'APPROVED'} ? 'bg-success' : 'bg-danger')"
+                                  th:text="${leave.hodStatus}"></span>
+                        <span th:if="${leave.hodStatus == null}" class="badge bg-secondary">Not Yet</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
